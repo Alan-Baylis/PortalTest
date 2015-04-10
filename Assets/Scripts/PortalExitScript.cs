@@ -4,14 +4,45 @@ using System.Collections;
 public class PortalExitScript : MonoBehaviour
 {
 
-    public GameObject player;
-    public GameObject portalEntrance;
-    public Camera portalEntranceCamera;
+    private GameObject player;
+    private Transform playerCamera;
+    private Transform dummyRotator;
+    private GameObject portalEntrance;
+    private Transform portalEntranceCamera;
+    private MainLogic mainLogic;
 
     // Use this for initialization
     void Start()
     {
+        mainLogic = GameObject.Find("MainLogic").GetComponent<MainLogic>();
 
+        if(mainLogic != null)
+        {
+            mainLogic.SetPortalExit(this.gameObject);
+
+            portalEntrance = mainLogic.GetPortalEntrance();
+
+            player = GameObject.Find("FPSController");
+            dummyRotator = transform.FindChild("DummyRotator");
+
+            if (portalEntrance)
+            {
+                portalEntranceCamera = portalEntrance.transform.FindChild("PortalEntranceCamera");
+
+                portalEntrance.GetComponent<PortalEntranceScript>().SetPortalExitCamera(this.transform.FindChild("PortalExitCamera"));
+                portalEntrance.GetComponent<PortalEntranceScript>().SetPortalExit(this.gameObject);
+            }
+        }
+    }
+
+    public void SetPortalEntranceCamera(Transform camera)
+    {
+        portalEntranceCamera = camera;
+    }
+
+    public void SetPortalEntrance(GameObject portal)
+    {
+        portalEntrance = portal;
     }
 
     // Update is called once per frame
@@ -19,11 +50,13 @@ public class PortalExitScript : MonoBehaviour
     {
         if (portalEntrance != null)
         {
-            Quaternion angle = Quaternion.Inverse(transform.rotation) * player.transform.rotation;
+            Vector3 localPortalDirection = player.transform.position - transform.position;
 
-            Quaternion newAngle = angle * portalEntrance.transform.rotation;
+            Quaternion rotation = Quaternion.LookRotation(localPortalDirection);
 
-            portalEntranceCamera.transform.localEulerAngles = new Vector3(newAngle.eulerAngles.x, newAngle.eulerAngles.y - 180, 0);
+            dummyRotator.rotation = rotation;
+
+            portalEntranceCamera.localRotation = dummyRotator.localRotation;
         }
     }
 }
